@@ -2,7 +2,7 @@
 
 A Python 3.10+ standard-library WSGI sensor for an application you own or are authorized to instrument. It stores observations locally in SQLite. There are no remote calls, downloads, hidden telemetry, background services or automatic Tor installation. The runtime has no third-party dependencies.
 
-Version 0.1.2 uses the distribution name `onionlens`. The Python import remains `onion_observatory`. The `onionlens`, `cepatreaza` and `onion-observatory` commands invoke the same sensor. Existing integrations can keep their imports and command names.
+Since version 0.1.2 the distribution name is `onionlens`. The Python import remains `onion_observatory`. The `onionlens`, `cepatreaza` and `onion-observatory` commands invoke the same sensor. Existing integrations can keep their imports and command names.
 
 [PyPI](https://pypi.org/project/onionlens/) · [Website](https://onionlens.org) · [Source repository](https://github.com/NellInc/OnionLens-public)
 
@@ -17,7 +17,7 @@ onionlens serve --channel clearnet --db observatory.sqlite3
 
 For a local source checkout, use `python -m pip install .` instead.
 
-The reference server binds `127.0.0.1:8787` by default. Open `http://127.0.0.1:8787/_oo/demo` for a labelled demonstration. The response contains a benign instruction to request a relative callback URL. Following that URL records a demo callback. `/_oo/probe` issues an unsolicited-class probe instead. No application HTML is modified or injected.
+The reference server binds `127.0.0.1:8787` by default. Open `http://127.0.0.1:8787/_oo/demo` for a labelled demonstration. The response contains a benign instruction to request a same-origin callback path. Following that path records a demo callback. `/_oo/probe` issues an unsolicited-class probe instead. No application HTML is modified or injected.
 
 ```sh
 onionlens summary --db observatory.sqlite3
@@ -35,7 +35,7 @@ application = Sensor(original_application, "sensor.sqlite3",
                      channel="clearnet")
 ```
 
-Choose a database location outside your web root. Create its parent directory first and restrict its permissions. The sensor reserves exactly `/_oo/probe`, `/_oo/demo`, and `/_oo/callback`. Keep these paths outside your application's route space. All other response iterables and headers pass through unchanged, including encoded and streaming responses. Use a suitable production WSGI server for an exposed service. The Python reference server is for local demonstration, not hardened production hosting.
+Choose a database file location outside your web root; `:memory:` is not supported. Create its parent directory first and restrict its permissions. The sensor reserves exactly `/_oo/probe`, `/_oo/demo`, and `/_oo/callback`, relative to the application's mount point (`SCRIPT_NAME`). The advertised callback path includes that mount point. Keep these paths outside your application's route space. All other response iterables and headers pass through unchanged, including encoded and streaming responses. Use a suitable production WSGI server for an exposed service. The Python reference server is for local demonstration, not hardened production hosting.
 
 The channel is fixed operator configuration, never inferred from hosts, addresses or headers. To compare onion and clearnet traffic, run separate listeners with different fixed channels. They may share a database. Put your own authentication or access policy outside the sensor if these endpoints must be restricted.
 
@@ -91,7 +91,7 @@ The public OnionLens service has a separate research deployment and its own data
 
 ## Data and privacy boundaries
 
-Each request records time, fixed channel, event kind, traffic class, method (16 characters), path (1024 characters), user agent (512 characters), and optional hashed origin-token correlation and callback delay. Control characters are replaced. SQLite stores issued token hashes and issue times so callback validation survives restarts. Tokens expire for validation after 24 hours; expiration does not automatically delete records. Valid callbacks can repeat and counts are request counts, not unique actors. Delay measures probe issuance to callback receipt, including delivery and network latency; it is not a verified reading or reasoning duration.
+Each request records time, fixed channel, event kind, traffic class, method (16 characters), path (1024 characters), user agent (512 characters), and optional hashed origin-token correlation and callback delay. Paths and user agents are decoded as UTF-8, with undecodable bytes kept as `\xNN` escapes. Control characters are replaced. SQLite stores issued token hashes and issue times so callback validation survives restarts. Tokens expire for validation after 24 hours; expiration does not automatically delete records. Valid callbacks can repeat and counts are request counts, not unique actors. Delay measures probe issuance to callback receipt, including delivery and network latency; it is not a verified reading or reasoning duration.
 
 The sensor does not read or store request bodies, IP addresses, cookies, authorization headers, referrers, raw query strings, or task descriptions. It parses only the callback token query parameter and never stores the raw token. Paths and user agents are untrusted text and may themselves contain personal or sensitive information. Do not put secrets in them. There is no semantic extraction of task content. An app that embeds task descriptions or secrets in paths or user agents needs additional operator-side minimisation before this wrapper.
 

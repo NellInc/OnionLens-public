@@ -16,7 +16,7 @@ Onion counterpart: http://pjzhmrhqlmjvhb5eeqmgnil7oztrbqkt45hay4zsvj5e6dblnfezop
 
 ## Connect a client
 
-Use Streamable HTTP with JSON responses. The server supports MCP 2025-03-26 and 2025-06-18, has no session ID, and returns 405 for a persistent GET stream. No login or API key is required for these public tools.
+Use Streamable HTTP with JSON responses. The server supports MCP 2025-03-26 and 2025-06-18, has no session ID, and returns 405 for a persistent GET stream. JSON-RPC batches of up to 16 messages are accepted under 2025-03-26 and rejected when the MCP-Protocol-Version header is 2025-06-18. No login or API key is required for these public tools.
 
 ```json
 {"mcpServers":{"onionlens":{"url":"https://onionlens.org/demo/mcp"}}}

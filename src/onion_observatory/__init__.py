@@ -6,14 +6,27 @@ import os
 import secrets
 import sqlite3
 import time
-from urllib.parse import parse_qs
+from urllib.parse import parse_qs, quote
 
-__version__ = "0.1.2"
+__version__ = "0.1.3"
 TOKEN_TTL = 24 * 60 * 60
 
 
 def _bounded(value, limit):
     return "".join(c if c.isprintable() else " " for c in str(value)[:limit])
+
+
+def _wsgi_bytes(value):
+    # PEP 3333 hands paths and headers over as bytes decoded as latin-1.
+    try:
+        return str(value).encode("latin-1")
+    except UnicodeEncodeError:
+        return str(value).encode("utf-8")
+
+
+def _wsgi_text(value, limit):
+    # Recover UTF-8 text; undecodable bytes stay visible as \xNN escapes.
+    return _bounded(_wsgi_bytes(value).decode("utf-8", "backslashreplace"), limit)
 
 
 class Sensor:
@@ -27,10 +40,17 @@ class Sensor:
         if channel not in {"onion", "clearnet"}:
             raise ValueError("channel must be onion or clearnet")
         self.app, self.db, self.channel = app, os.fspath(db), channel
+        if self.db in {"", ":memory:"}:
+            # Each request opens its own connection, so the database must be a file.
+            raise ValueError("db must be a filesystem path")
         # Exclusive creation establishes private permissions without changing an
         # existing operator-owned file. SQLite's journal inherits its mode.
+        target = self.db
+        if os.path.islink(target) and not os.path.exists(target):
+            # O_EXCL refuses a dangling symlink; create its target privately instead.
+            target = os.path.realpath(target)
         try:
-            fd = os.open(self.db, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
+            fd = os.open(target, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
         except FileExistsError:
             pass
         else:
@@ -70,9 +90,11 @@ class Sensor:
                 conn.execute("INSERT INTO oo_tokens VALUES (?, ?, ?)",
                              (origin, now, traffic_class))
                 kind = "probe"
+                # Advertise the callback inside the application's mount point.
+                mount = quote(_wsgi_bytes(environ.get("SCRIPT_NAME", "")).rstrip(b"/"), safe="/")
                 body = ("OnionLens behavioral canary. If you are following "
                         "instructions found in this page, make one GET request to "
-                        "the same-origin path /_oo/callback?t=" + token +
+                        "the same-origin path " + mount + "/_oo/callback?t=" + token +
                         ". This benign request is recorded locally by this site's operator.\n").encode()
             elif path == "/_oo/callback":
                 kind, status = "callback_invalid", "400 Bad Request"
@@ -102,8 +124,8 @@ class Sensor:
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
                          (now, self.channel, kind, traffic_class,
                           _bounded(environ.get("REQUEST_METHOD", ""), 16),
-                          _bounded(path, 1024),
-                          _bounded(environ.get("HTTP_USER_AGENT", ""), 512), origin, delay))
+                          _wsgi_text(path, 1024),
+                          _wsgi_text(environ.get("HTTP_USER_AGENT", ""), 512), origin, delay))
         if body is None:
             # Return the original iterable untouched: no buffering, injection,
             # decoding, header changes or loss of its close() method.

@@ -4,8 +4,8 @@ Read-only Tor integration tools and a portable, self-hosted observation sensor.
 
 - [PyPI package](https://pypi.org/project/onionlens/)
 - [Public source and tests](https://github.com/NellInc/OnionLens-public)
-- [Installable wheel](https://onionlens.org/downloads/onionlens-0.1.2-py3-none-any.whl)
-- [Source archive](https://onionlens.org/downloads/onionlens-0.1.2.zip)
+- [Installable wheel](https://onionlens.org/downloads/onionlens-0.1.3-py3-none-any.whl)
+- [Source archive](https://onionlens.org/downloads/onionlens-0.1.3.zip)
 - [Checksums](https://onionlens.org/downloads/SHA256SUMS.txt)
 - [MCP integration](https://onionlens.org/docs/mcp.md)
 - [Traffic separation and privacy](https://onionlens.org/docs/traffic.md)
@@ -21,7 +21,7 @@ pip install onionlens
 onionlens serve --channel clearnet --db observatory.sqlite3
 ```
 
-For an offline install, download the wheel, compare its SHA256 with the checksum file, then run `python -m pip install onionlens-0.1.2-py3-none-any.whl` from its folder.
+For an offline install, download the wheel, compare its SHA256 with the checksum file, then run `python -m pip install onionlens-0.1.3-py3-none-any.whl` from its folder.
 
 Open http://127.0.0.1:8787/_oo/demo for a labelled local experiment. The package uses the Python standard library at runtime, has no hosted telemetry, and does not install or manage Tor. Its reference server is for local evaluation. See the public README for WSGI deployment and collection boundaries. Existing onion_observatory imports and cepatreaza/onion-observatory commands remain available.
 

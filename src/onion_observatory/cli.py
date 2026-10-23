@@ -37,14 +37,21 @@ def summary(db):
             "invalid_callbacks": invalid}
 
 
+def port(value):
+    number = int(value)
+    if not 0 <= number <= 65535:
+        raise argparse.ArgumentTypeError("port must be 0-65535")
+    return number
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description="Local opt-in WSGI canary sensor")
     commands = parser.add_subparsers(dest="command", required=True)
     serve = commands.add_parser("serve", help="run loopback reference demo server")
     serve.add_argument("--db", default="observatory.sqlite3")
     serve.add_argument("--channel", choices=("onion", "clearnet"), required=True)
-    serve.add_argument("--host", default="127.0.0.1")
-    serve.add_argument("--port", type=int, default=8787)
+    serve.add_argument("--host", default="127.0.0.1", help="IPv4 address")
+    serve.add_argument("--port", type=port, default=8787)
     report = commands.add_parser("summary", help="print only aggregate local counts")
     report.add_argument("--db", required=True)
     args = parser.parse_args(argv)
@@ -54,9 +61,18 @@ def main(argv=None):
         except sqlite3.Error:
             parser.exit(1, "Cannot read an initialized sensor database.\n")
         return
-    app = Sensor(demo_app, args.db, channel=args.channel)
-    with make_server(args.host, args.port, app, handler_class=QuietHandler) as server:
-        print(f"Sensor listening at http://{args.host}:{server.server_port}; channel={args.channel}")
+    try:
+        # Bind first so a failed bind leaves no new database behind.
+        server = make_server(args.host, args.port, None, handler_class=QuietHandler)
+    except OSError as error:
+        parser.exit(1, f"Cannot listen on {args.host}:{args.port}: {error.strerror or error}\n")
+    with server:
+        try:
+            server.set_app(Sensor(demo_app, args.db, channel=args.channel))
+        except (OSError, ValueError, sqlite3.Error) as error:
+            parser.exit(1, f"Cannot open sensor database: {error}\n")
+        print(f"Sensor listening at http://{args.host}:{server.server_port}; channel={args.channel}",
+              flush=True)
         try:
             server.serve_forever()
         except KeyboardInterrupt:
