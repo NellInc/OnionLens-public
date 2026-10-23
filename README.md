@@ -4,16 +4,18 @@ A Python 3.10+ standard-library WSGI sensor for an application you own or are au
 
 Version 0.1.2 uses the distribution name `onionlens`. The Python import remains `onion_observatory`. The `onionlens`, `cepatreaza` and `onion-observatory` commands invoke the same sensor. Existing integrations can keep their imports and command names.
 
-[Website](https://onionlens.org) · [Source repository](https://github.com/NellInc/OnionLens-public)
+[PyPI](https://pypi.org/project/onionlens/) · [Website](https://onionlens.org) · [Source repository](https://github.com/NellInc/OnionLens-public)
 
 ## Install and run
 
 ```sh
 python3 -m venv .venv
 . .venv/bin/activate
-python -m pip install .
+pip install onionlens
 onionlens serve --channel clearnet --db observatory.sqlite3
 ```
+
+For a local source checkout, use `python -m pip install .` instead.
 
 The reference server binds `127.0.0.1:8787` by default. Open `http://127.0.0.1:8787/_oo/demo` for a labelled demonstration. The response contains a benign instruction to request a relative callback URL. Following that URL records a demo callback. `/_oo/probe` issues an unsolicited-class probe instead. No application HTML is modified or injected.
 
