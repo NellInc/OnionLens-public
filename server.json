@@ -1,0 +1,18 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "org.onionlens/tor-tools",
+  "title": "OnionLens Tor Tools",
+  "description": "Tor address validation and retrieval fixtures, with disclosed research logging.",
+  "version": "0.1.2",
+  "websiteUrl": "https://onionlens.org/docs/#mcp",
+  "repository": {
+    "url": "https://github.com/NellInc/OnionLens-public",
+    "source": "github"
+  },
+  "remotes": [
+    {
+      "type": "streamable-http",
+      "url": "https://onionlens.org/mcp"
+    }
+  ]
+}

@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "onionlens"
+version = "0.1.2"
+description = "OnionLens local, privacy-minimised opt-in WSGI behavioral canary sensor"
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "MIT"}
+authors = [{name = "OnionLens contributors"}]
+dependencies = []
+
+[project.urls]
+Homepage = "https://onionlens.org"
+Repository = "https://github.com/NellInc/OnionLens-public"
+
+[project.scripts]
+onionlens = "onion_observatory.cli:main"
+cepatreaza = "onion_observatory.cli:main"
+onion-observatory = "onion_observatory.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
