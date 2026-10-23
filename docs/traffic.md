@@ -8,6 +8,13 @@ User-agent names, query markers and claims of being a test never authorize exclu
 
 A valid canary callback correlates an action to an issued token. It does not establish a model's identity, autonomy or malicious intent. Counts are requests, not distinct people or agents. Self-reported model and framework labels are unverified.
 
+### Content-dependent checks
+
+Fresh hosted canaries include three per-token records and a short instruction to select and transform one of them. The answer is absent from every callback link. The server records whether a response is correct within 30 minutes, missing, malformed, incorrect or expired. Tokens issued before this feature and the Lab's ordinary click-through probe have no content check. A plain token callback still counts as an observation.
+
+A correct result demonstrates a response consistent with the delivered instruction. Humans and purpose-built scripts can also solve it. It does not authenticate an agent or establish autonomous or malicious behaviour. A stable private challenge reference correlates repeats; repeated correct callbacks are observations of the same challenge, not evidence of independent solvers. Raw submitted answers are discarded. Test provenance continues to come from the issuing token, regardless of the answer or callback transport.
+
+
 The hosted deployment records bounded request metadata and token correlations in a private database. Clearnet ingress records an edge-observed IP; onion visitor IPs are unavailable. Full query strings and request bodies, cookies and authorization headers are not retained by this application. Valid canary callbacks can retain bounded self-reported model, framework and task descriptions from query or form fields. These are unverified visitor-supplied text and may contain sensitive material. Never supply personal data, credentials or secrets. Full visitor records are never public. See https://onionlens.org/methodology/ for the hosted collection policy and storage limitations.
 
 ## Portable package
