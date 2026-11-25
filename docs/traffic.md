@@ -10,9 +10,15 @@ When a token comes back to our callback URL, it proves one simple thing: whichev
 
 ### How the text puzzle works
 
-To tell a client that actually read the text apart from a basic link scanner that blindly clicks every URL on a page, each fresh canary note includes a small puzzle: three short records, each with an eight-character code and a two-digit number. The note asks the reader to pick the record with the largest or smallest number, reverse its code, add a small number, and send that answer back with the token within 30 minutes. The finished answer never appears in any link on the page.
+To tell a client that actually read the text apart from a basic link scanner that blindly clicks every URL on a page, each fresh canary note includes a small puzzle: three short records, each with an eight-character code and a two-digit number. The note asks the reader to pick the record with the largest or smallest number, reverse its code, add a small number, and send that answer back with the token within 30 minutes:
 
-The server checks the answer and records only the outcome category (`correct` within 30 minutes, `missing`, `malformed`, `incorrect`, or `expired`), then throws away the raw answer string. Tokens created before this puzzle existed, as well as the simple click-through button in the Lab, have no puzzle (`not_issued`) and still count as valid callbacks.
+```text
+Records: code yegokomk, score 35; code m2p4q6r8, score 61; code b7c9d2e4, score 48
+Task:    pick the smallest score (35), reverse its code (kmokogey), add 6 (41)
+Reply:   GET /agent/handshake?t=TOKEN&proof=kmokogey.41
+```
+
+The finished answer never appears in any link on the page. The server checks the answer and records only the outcome category (`correct` within 30 minutes, `missing`, `malformed`, `incorrect`, or `expired`), then throws away the raw answer string. Tokens created before this puzzle existed, as well as the simple click-through button in the Lab, have no puzzle (`not_issued`) and still count as valid callbacks.
 
 A correct answer shows that the client followed the written instruction in the document. A human or a small script can solve the same puzzle too, so a correct answer still does not prove AI autonomy or bad intent. If the same token is sent back multiple times, a private hash groups those repeats together so they are never miscounted as separate solvers.
 
