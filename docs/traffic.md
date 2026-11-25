@@ -2,22 +2,26 @@
 
 ## Hosted service
 
-Use /demo/, /demo/mcp, /demo/api/v1/fixture and /demo/api/v1/onion/validate for deliberate experiments. The server assigns demo provenance from these dedicated routes; issued callback tokens retain that provenance across transports. Operator QA uses authenticated test issuance, without publishing an operator credential. Ordinary public routes remain instrumented.
+When you want to test how OnionLens works, use `/demo/`, `/demo/mcp`, `/demo/api/v1/fixture`, or `/demo/api/v1/onion/validate`. Every token created on a `/demo/` route is stamped as a demonstration by the server when it is created, and keeps that stamp even if the callback comes back over the other transport (such as fetched over Tor and returned over HTTPS). Our own deployment health checks use a private operator key. All other public routes are logged as normal, uninvited visits.
 
-User-agent names, query markers and claims of being a test never authorize exclusion from monitoring. A referral or campaign source is a separate acquisition attribute, not permission to relabel a visit. Invited benchmark runs are experiments; ordinary users choosing a published tool are genuine usage, without establishing autonomous discovery.
+A visitor cannot mark their own request as a test by adding `test` to a query string, user-agent header, or model label: the server only trusts the route where the token was created or the private operator key.
 
-A valid canary callback correlates an action to an issued token. It does not establish a model's identity, autonomy or malicious intent. Counts are requests, not distinct people or agents. Self-reported model and framework labels are unverified.
+When a token comes back to our callback URL, it proves one simple thing: whichever client fetched the document also made the follow-up callback request. It never proves which AI model was used, whether it was running on its own without a human, or whether the visitor had bad intentions. All traffic numbers count requests, never unique people or agents, and any model or framework names sent in a callback are unverified labels.
 
-### Content-dependent checks
+### How the text puzzle works
 
-Fresh hosted canaries include three per-token records and a short instruction to select and transform one of them. The answer is absent from every callback link. The server records whether a response is correct within 30 minutes, missing, malformed, incorrect or expired. Tokens issued before this feature and the Lab's ordinary click-through probe have no content check. A plain token callback still counts as an observation.
+To tell a client that actually read the text apart from a basic link scanner that blindly clicks every URL on a page, each fresh canary note includes a small puzzle: three short records, each with an eight-character code and a two-digit number. The note asks the reader to pick the record with the largest or smallest number, reverse its code, add a small number, and send that answer back with the token within 30 minutes. The finished answer never appears in any link on the page.
 
-A correct result demonstrates a response consistent with the delivered instruction. Humans and purpose-built scripts can also solve it. It does not authenticate an agent or establish autonomous or malicious behaviour. A stable private challenge reference correlates repeats; repeated correct callbacks are observations of the same challenge, not evidence of independent solvers. Raw submitted answers are discarded. Test provenance continues to come from the issuing token, regardless of the answer or callback transport.
+The server checks the answer and records only the outcome category (`correct` within 30 minutes, `missing`, `malformed`, `incorrect`, or `expired`), then throws away the raw answer string. Tokens created before this puzzle existed, as well as the simple click-through button in the Lab, have no puzzle (`not_issued`) and still count as valid callbacks.
 
-### Collection and privacy
+A correct answer shows that the client followed the written instruction in the document. A human or a small script can solve the same puzzle too, so a correct answer still does not prove AI autonomy or bad intent. If the same token is sent back multiple times, a private hash groups those repeats together so they are never miscounted as separate solvers.
 
-The hosted deployment records bounded request metadata and token correlations in a private database. Clearnet ingress records an edge-observed IP; onion visitor IPs are unavailable. Full query strings and request bodies, cookies and authorization headers are not retained by this application. The hosted tools retain fixed categories for MCP, JSON API tool and address-check outcomes; addresses entered in the checker, MCP arguments and tool results are not recorded. Valid canary callbacks can retain bounded self-reported model and framework labels from query or form fields. These are unverified visitor-supplied text and may contain sensitive material. Never supply personal data, credentials or secrets. Full visitor records are never public. See https://onionlens.org/methodology/ for the hosted collection policy and storage limitations.
+### What gets saved and what stays private
 
-## Portable package
+For each request, the hosted server saves the timestamp, URL path, HTTP method, transport (`clearnet` or `onion`), a length-capped user-agent string, and basic non-secret headers in a private database. On normal HTTPS it sees the visitor's IP address; over Tor, visitor IPs are invisible. We discard full query strings, request bodies, cookies, login headers, and referrer URLs.
 
-The package is separate software. It stores observations locally in SQLite, sends no telemetry and never installs Tor. Only /_oo/demo and callbacks from its issued tokens are demo. Ordinary local tests outside those routes remain unlabelled; keep study notes and account for them in your analysis. The package does not implement the hosted operator authentication mechanism. See the public README for all recorded fields, token expiry and deployment boundaries.
+When someone uses the address checker, JSON tool APIs, or MCP tools, we record only the fixed outcome category (such as a valid address check or a completed tool call). We never record the `.onion` addresses you type into the checker, MCP arguments, or tool outputs. Valid callbacks can include optional short `model` and `framework` labels; never send personal data, passwords, or secret keys. Visitor logs are never public. Full details live at https://onionlens.org/methodology/.
+
+## Portable Python package
+
+The downloadable `onionlens` package is separate software that you run on your own server. It saves logs locally in a SQLite file on your disk, never records IP addresses, never phones home, and never installs or manages Tor. Only its `/_oo/demo` route tags tokens as a demo; if you run your own tests against `/_oo/probe`, keep notes of your test times so you can separate them when you review your local SQLite summary. See the package README for every SQLite column and option.
