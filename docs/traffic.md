@@ -2,7 +2,7 @@
 
 ## Hosted service
 
-When you want to test how OnionLens works, use `/demo/`, `/demo/mcp`, `/demo/api/v1/fixture`, or `/demo/api/v1/onion/validate`. Every token created on a `/demo/` route is stamped as a demonstration by the server when it is created, and keeps that stamp even if the callback comes back over the other transport (such as fetched over Tor and returned over HTTPS). Our own deployment health checks use a private operator key. All other public routes are logged as normal, uninvited visits.
+When you want to test how OnionLens works, use `/demo/`, `/demo/mcp`, `/demo/api/v1/resources`, `/demo/api/v1/fixture`, or `/demo/api/v1/onion/validate`. Every token created on a `/demo/` route is stamped as a demonstration by the server when it is created, and keeps that stamp even if the callback comes back over the other transport (such as fetched over Tor and returned over HTTPS). Our own deployment health checks use a private operator key. All other public routes are logged as normal, uninvited visits.
 
 A visitor cannot mark their own request as a test by adding `test` to a query string, user-agent header, or model label: the server only trusts the route where the token was created or the private operator key.
 
