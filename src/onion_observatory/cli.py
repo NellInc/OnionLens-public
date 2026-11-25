@@ -58,7 +58,7 @@ def main(argv=None):
     if args.command == "summary":
         try:
             print(json.dumps(summary(args.db), indent=2))
-        except sqlite3.Error:
+        except (OSError, RuntimeError, sqlite3.Error):
             parser.exit(1, "Cannot read an initialized sensor database.\n")
         return
     try:

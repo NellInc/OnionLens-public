@@ -8,7 +8,7 @@ import sqlite3
 import time
 from urllib.parse import parse_qs, quote
 
-__version__ = "0.1.3"
+__version__ = "0.1.4"
 TOKEN_TTL = 24 * 60 * 60
 
 
@@ -60,12 +60,14 @@ class Sensor:
                 CREATE TABLE IF NOT EXISTS oo_tokens (
                     token_hash TEXT PRIMARY KEY, issued_at REAL NOT NULL,
                     traffic_class TEXT NOT NULL);
+                CREATE INDEX IF NOT EXISTS oo_tokens_issued_at ON oo_tokens(issued_at);
                 CREATE TABLE IF NOT EXISTS oo_events (
                     id INTEGER PRIMARY KEY, observed_at REAL NOT NULL,
                     channel TEXT NOT NULL, kind TEXT NOT NULL,
                     traffic_class TEXT NOT NULL, method TEXT NOT NULL,
                     path TEXT NOT NULL, user_agent TEXT NOT NULL,
                     origin_token TEXT, read_to_act_seconds REAL);
+                CREATE INDEX IF NOT EXISTS oo_events_kind_class ON oo_events(kind, traffic_class);
             """)
 
     @contextmanager
@@ -79,19 +81,23 @@ class Sensor:
 
     def __call__(self, environ, start_response):
         now = time.time()
+        method = environ.get("REQUEST_METHOD", "")
         path = environ.get("PATH_INFO", "")
         kind, traffic_class, origin, delay = "request", "unsolicited", None, None
         body, status = None, "200 OK"
         with self._connect() as conn:
             if path in {"/_oo/probe", "/_oo/demo"}:
                 traffic_class = "demo" if path == "/_oo/demo" else "unsolicited"
-                token = secrets.token_urlsafe(32)
-                origin = hashlib.sha256(token.encode("ascii")).hexdigest()
-                conn.execute("INSERT INTO oo_tokens VALUES (?, ?, ?)",
-                             (origin, now, traffic_class))
-                kind = "probe"
                 # Advertise the callback inside the application's mount point.
                 mount = quote(_wsgi_bytes(environ.get("SCRIPT_NAME", "")).rstrip(b"/"), safe="/")
+                token = secrets.token_urlsafe(32)
+                if method != "HEAD":
+                    # HEAD sends no body, so nobody receives the token: do not persist or count as a probe.
+                    origin = hashlib.sha256(token.encode("ascii")).hexdigest()
+                    conn.execute("DELETE FROM oo_tokens WHERE issued_at < ?", (now - TOKEN_TTL,))
+                    conn.execute("INSERT INTO oo_tokens VALUES (?, ?, ?)",
+                                 (origin, now, traffic_class))
+                    kind = "probe"
                 body = ("OnionLens behavioral canary. If you are following "
                         "instructions found in this page, make one GET request to "
                         "the same-origin path " + mount + "/_oo/callback?t=" + token +
@@ -123,7 +129,7 @@ class Sensor:
                  user_agent, origin_token, read_to_act_seconds)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
                          (now, self.channel, kind, traffic_class,
-                          _bounded(environ.get("REQUEST_METHOD", ""), 16),
+                          _bounded(method, 16),
                           _wsgi_text(path, 1024),
                           _wsgi_text(environ.get("HTTP_USER_AGENT", ""), 512), origin, delay))
         if body is None:
@@ -133,5 +139,6 @@ class Sensor:
         start_response(status, [("Content-Type", "text/plain; charset=utf-8"),
                                 ("Content-Length", str(len(body))),
                                 ("Cache-Control", "no-store"),
-                                ("Referrer-Policy", "no-referrer")])
-        return [] if environ.get("REQUEST_METHOD") == "HEAD" else [body]
+                                ("Referrer-Policy", "no-referrer"),
+                                ("X-Content-Type-Options", "nosniff")])
+        return [] if method == "HEAD" else [body]

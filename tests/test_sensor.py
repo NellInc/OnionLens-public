@@ -220,6 +220,35 @@ class SensorTests(unittest.TestCase):
             self.assertNotIn("Traceback", errors.getvalue())
         self.assertFalse(missing.parent.exists())
 
+    def test_head_probes_do_not_persist_tokens_and_responses_set_nosniff(self):
+        for endpoint in ("/_oo/probe", "/_oo/demo"):
+            response = self.request(endpoint, REQUEST_METHOD="HEAD")
+            self.assertEqual(response["status"], "200 OK")
+            self.assertEqual(response["body"], b"")
+            self.assertIn(("X-Content-Type-Options", "nosniff"), response["headers"])
+        with contextlib.closing(sqlite3.connect(self.db)) as conn:
+            self.assertEqual(conn.execute("SELECT COUNT(*) FROM oo_tokens").fetchone()[0], 0)
+        self.assertEqual([r["kind"] for r in self.rows()], ["request", "request"])
+        self.assertEqual([r["traffic_class"] for r in self.rows()], ["unsolicited", "demo"])
+
+    def test_expired_tokens_are_pruned_on_new_probe_and_summary_handles_oserror(self):
+        self.token()
+        with contextlib.closing(sqlite3.connect(self.db)) as conn, conn:
+            conn.execute("UPDATE oo_tokens SET issued_at = issued_at - ?", (TOKEN_TTL + 10,))
+        self.token()
+        with contextlib.closing(sqlite3.connect(self.db)) as conn:
+            self.assertEqual(conn.execute("SELECT COUNT(*) FROM oo_tokens").fetchone()[0], 1)
+        loop_a = Path(self.tmp.name) / "loop_a"
+        loop_b = Path(self.tmp.name) / "loop_b"
+        loop_a.symlink_to(loop_b)
+        loop_b.symlink_to(loop_a)
+        errors = io.StringIO()
+        with contextlib.redirect_stderr(errors), self.assertRaises(SystemExit) as raised:
+            main(["summary", "--db", str(loop_a)])
+        self.assertEqual(raised.exception.code, 1)
+        self.assertIn("Cannot read an initialized sensor database", errors.getvalue())
+        self.assertNotIn("Traceback", errors.getvalue())
+
 
 if __name__ == "__main__":
     unittest.main()

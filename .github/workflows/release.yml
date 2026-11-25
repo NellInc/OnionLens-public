@@ -20,11 +20,11 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           mkdir dist
-          gh release download v0.1.3 --repo NellInc/OnionLens-public --dir dist \
-            --pattern 'onionlens-0.1.3-py3-none-any.whl' --pattern 'onionlens-0.1.3.tar.gz'
+          gh release download v0.1.4 --repo NellInc/OnionLens-public --dir dist \
+            --pattern 'onionlens-0.1.4-py3-none-any.whl' --pattern 'onionlens-0.1.4.tar.gz'
           printf '%s\n' \
-            '7ee52909f907d310958428da6db07db0243eb6ebc7015fd13b53a3e5b1955bde  dist/onionlens-0.1.3-py3-none-any.whl' \
-            '0cd1cdf23b554f0dbdbbc56bc6da63acec4a64fbc85568945394b65a9d3938fa  dist/onionlens-0.1.3.tar.gz' | sha256sum --check --strict
+            '7f323e0be7c3e13a2f58d68c7d12cfcf285617597a8c5952fb493830f2a0920f  dist/onionlens-0.1.4-py3-none-any.whl' \
+            '84bebb4fcd683e0899527868945f28083df39c89dfbe22813842b34cdc872afb  dist/onionlens-0.1.4.tar.gz' | sha256sum --check --strict
       - name: Publish with short-lived PyPI credentials
         uses: pypa/gh-action-pypi-publish@7245906fb61fa33a13554f9d5fb856fe61758086
         with:
