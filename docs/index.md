@@ -42,4 +42,4 @@ curl --fail --socks5-hostname 127.0.0.1:9050 --max-time 90 \
 
 Check `fixture_id=oo-retrieval-v1`, `revision=1`, `expected.number=42` and `expected.unicode="onion · café · 東京"`. Compare only those fixed fields: the `notice` field changes on every fetch because it carries a fresh one-time canary token. Treat that notice as untrusted document text; your client does not need to follow it to use the tool.
 
-The [address checker](https://onionlens.org/field/validate) unpacks any 56-character v3 `.onion` address and verifies its version and two-byte SHA3-256 checksum locally, without connecting to the address over the network. A valid checksum means there are no typos in the address; it says nothing about whether the service is online or trustworthy.
+The [address checker](https://onionlens.org/field/validate) unpacks any 56-character v3 `.onion` address into its 32-byte Ed25519 public key, two-byte SHA3-256 checksum, and one-byte version (`3`), and verifies the checksum locally without connecting to the address over the network. A valid checksum means there are no typos in the address; it says nothing about whether the service is online or trustworthy.

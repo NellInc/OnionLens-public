@@ -10,7 +10,7 @@ Onion counterpart: http://pjzhmrhqlmjvhb5eeqmgnil7oztrbqkt45hay4zsvj5e6dblnfezop
 
 ## Tools
 
-- `validate_onion_address`: unpacks a 56-character v3 `.onion` hostname and verifies its version byte and two-byte SHA3-256 checksum locally, with zero network traffic.
+- `validate_onion_address`: unpacks a 56-character v3 `.onion` hostname into its 32-byte Ed25519 public key, two-byte SHA3-256 checksum, and version byte (`3`), and verifies the checksum locally with zero network traffic.
 - `list_resources`: returns official Tor Project setup guides and test endpoints in JSON.
 - `retrieval_fixture`: returns a small test document with fixed known values (`number: 42`, `unicode: "onion · café · 東京"`) so you can verify your client's transport and UTF-8 parsing.
 
